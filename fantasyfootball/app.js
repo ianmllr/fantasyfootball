@@ -1,9 +1,12 @@
 const express = require('express');
+const path = require('path');
 require('dotenv').config({ path: './.gitignore/config.env' });
 
 const HOST = process.env.HOST;
 const PORT = process.env.PORT;
 const MONGO_URL = process.env.MONGODB_URL;
+
+const userRoutes= require('./routes/userRoutes');
 
 const { logger } = require('./middleware/logger');
 const { limiter } = require('./middleware/rateLimiter');
@@ -19,8 +22,10 @@ connectDB(MONGO_URL).catch(err => {
 app.use(limiter);
 app.use(logger);
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// routes herunder
+// routes
+app.use('/user', userRoutes);
 
 
 app.listen(PORT, HOST, () => {

@@ -1,6 +1,8 @@
 const User = require('../models/userModel');
 
-// CREATE user
+
+// CRUD
+// CREATE (POST) user
 exports.createUser = async (req, res) => {
     try {
         const { username, password, email } = req.body;
@@ -34,11 +36,102 @@ exports.createUser = async (req, res) => {
     }
 }
 
-// READ user
-exports.readUser = async (req, res) => {
+// READ (GET) user
+exports.readUserByUsername = async (req, res) => {
     try {
-        const user = await User.findOne(req.body.name);
+        const name = req.query.name || req.body.name;
+        if (!name) {
+            return res.status(400).json({ error: 'Name is required' });
+        }
+        const user = await User.findOne({ username: name }).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.status(200).json({ data: user });
     } catch (err) {
-
+        return res.status(500).json({
+            message: err.message
+            }
+        )
     }
 }
+
+// READ (GET) all users
+exports.readAllUsers = async (req, res) => {
+    try {
+        const users = await User.find().select('-password');
+        res.status(200).json({ data: users });
+    } catch (err) {
+        return res.status(500).json({
+            message: err.message
+            }
+        )
+    }
+}
+
+// UPDATE (PUT) username and email
+exports.updateUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const updates = req.body;
+
+        if (updates.password) {
+            return res.status(400).json({ error: 'Password cannot be updated here' });
+        }
+        const user = await User.findByIdAndUpdate(userId, updates, { new: true }).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.status(200).json({ data: user });
+    } catch (err) {
+        return res.status(500).json({
+            message: err.message
+            }
+        )
+    }
+}
+
+// DELETE (DELETE) user
+exports.deleteUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await User.findByIdAndDelete(userId)
+        if (!user) {
+            res.status(404).json({error: 'User not found'})
+        }
+        res.status(200).json({message: 'User deleted successfully'})
+    } catch (err) {
+        return res.status(500).json({
+            message: err.message
+            }
+        )
+    }
+}
+// crud operations slut
+
+// login, logout osv
+
+// LOGIN (POST) user
+// ved ikke med token osv endnu
+exports.loginUser = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password are required' });
+        }
+        const user = await User.findOne({ username }).select('+password');
+        if (!user || !(await user.comparePassword(password))) {
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
+        const userResponse = user.toObject();
+        delete userResponse.password;
+        res.status(200).json({ data: userResponse });
+    } catch (err) {
+        return res.status(500).json({
+            message: err.message
+            }
+        )
+    }
+}
+
+

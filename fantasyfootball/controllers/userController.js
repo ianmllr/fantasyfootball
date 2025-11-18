@@ -33,3 +33,12 @@ exports.createUser = async (req, res) => {
         )
     }
 }
+
+// READ user
+exports.readUser = async (req, res) => {
+    try {
+        const user = await User.findOne(req.body.name);
+    } catch (err) {
+
+    }
+}

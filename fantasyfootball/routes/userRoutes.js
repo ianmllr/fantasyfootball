@@ -3,6 +3,7 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 
 
+
 // CRUD routes
 router.post('/register', userController.createUser)
 
@@ -15,7 +16,7 @@ router.put('/update/:id', userController.updateUser)
 router.delete('/delete/:id', userController.deleteUser)
 
 // login, logout routes
-router.post('/login', userController.loginUser)
+router.post('/login', userController.login)
 
 
 module.exports = router;

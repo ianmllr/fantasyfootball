@@ -1,4 +1,5 @@
 const User = require('../models/userModel');
+const bcrypt = require('bcryptjs');
 
 
 // CRUD
@@ -21,13 +22,11 @@ exports.createUser = async (req, res) => {
                 message: "Email is required."
             })
         }
-        const user = await User.create({ username, password, email });
 
-        const userResponse = user.toObject();
-        delete userResponse.password;
-        res.status(201).json({
-            data: userResponse
-        });
+        const hash = await bcrypt.hash(password, 10);
+        const user = await User.create({ email, password: hash, username });
+
+        return res.status(201).json({ id: user._id, email: user.email });
     } catch (err) {
         return res.status(500).json({
             message: err.message
@@ -113,19 +112,21 @@ exports.deleteUser = async (req, res) => {
 
 // LOGIN (POST) user
 // ved ikke med token osv endnu
-exports.loginUser = async (req, res) => {
+exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
         if (!username || !password) {
             return res.status(400).json({ error: 'Username and password are required' });
         }
-        const user = await User.findOne({ username }).select('+password');
+        const user = await User.findOne({ username });
         if (!user || !(await user.comparePassword(password))) {
             return res.status(401).json({ error: 'Invalid username or password' });
         }
-        const userResponse = user.toObject();
-        delete userResponse.password;
-        res.status(200).json({ data: userResponse });
+
+        const ok = await bcrypt.compare(password, user.password);
+        if (!ok) return res.status(401).json({ message: 'Invalid credentials' });
+
+        return res.json({ message: 'Authenticated' });
     } catch (err) {
         return res.status(500).json({
             message: err.message
